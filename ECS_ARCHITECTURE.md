@@ -37,8 +37,17 @@ interface HealthComponent {
 interface AttackComponent {
   damage: number;
   range: number;
-  cooldown: number;
-  lastAttack: number;
+  cooldown: number; // in milliseconds
+}
+
+interface DeterministicTimingComponent {
+  lastTriggerFrame: number;
+  cooldownFrames: number;
+}
+
+interface ReplayComponent {
+  recordEvents: boolean;
+  eventTypes: string[];
 }
 ```
 
@@ -62,16 +71,18 @@ class AttackSystem implements System {
 
 ## Tower Defense ECS Examples
 
-### Basic Tower Entity
+### Basic Tower Entity (Deterministic)
 ```typescript
 // Tower Entity ID: "tower_123"
 const towerComponents = {
   Position: { x: 5, y: 3 },
   Health: { current: 100, maximum: 100 },
-  Attack: { damage: 25, range: 150, cooldown: 1000, lastAttack: 0 },
+  Attack: { damage: 25, range: 150, cooldown: 1000 },
+  DeterministicTiming: { lastTriggerFrame: 0, cooldownFrames: 60 }, // 1000ms = 60 frames at 60fps
   Targeting: { strategy: "closest", currentTarget: null },
   Upgrade: { level: 1, experience: 0 },
-  Visual: { sprite: "basic_tower", rotation: 0 }
+  Visual: { sprite: "basic_tower", rotation: 0 },
+  Replay: { recordEvents: true, eventTypes: ["attack", "target_acquired", "upgrade"] }
 };
 ```
 
@@ -106,6 +117,8 @@ const projectileComponents = {
 
 ## Core Systems
 
+All systems are designed to be deterministic and support replay functionality. They use frame-based timing instead of real-time clocks and seeded randomization for consistent behavior across different platforms and sessions.
+
 ### MovementSystem
 ```typescript
 class MovementSystem implements System {
@@ -130,25 +143,40 @@ class MovementSystem implements System {
 }
 ```
 
-### AttackSystem
+### AttackSystem (Deterministic)
 ```typescript
 class AttackSystem implements System {
   update(entities: EntityManager, deltaTime: number) {
-    const attackers = entities.withComponents(['Position', 'Attack', 'Targeting']);
+    const attackers = entities.withComponents(['Position', 'Attack', 'Targeting', 'DeterministicTiming']);
     
     for (const attacker of attackers) {
       const attack = attacker.Attack;
+      const timing = attacker.DeterministicTiming;
+      const currentFrame = GameClock.instance.getFrames();
       
-      // Check cooldown
-      if (Date.now() - attack.lastAttack < attack.cooldown) continue;
+      // Use frame-based timing instead of Date.now() for deterministic behavior
+      const framesSinceLastAttack = currentFrame - timing.lastTriggerFrame;
+      const cooldownFrames = Math.floor(attack.cooldown / 1000 * 60); // Convert ms to frames (60fps)
       
-      // Find target
-      const target = this.findTarget(attacker, entities);
-      if (!target) continue;
-      
-      // Create projectile
-      this.createProjectile(attacker, target);
-      attack.lastAttack = Date.now();
+      if (framesSinceLastAttack >= cooldownFrames) {
+        // Find target using deterministic targeting
+        const target = this.findTarget(attacker, entities);
+        if (!target) continue;
+        
+        // Create projectile with seeded randomization for damage variance
+        this.createProjectile(attacker, target);
+        timing.lastTriggerFrame = currentFrame;
+        
+        // Record event for replay system
+        if (ReplayRecorder.instance.isRecording()) {
+          ReplayRecorder.instance.recordEvent({
+            type: 'tower_attack',
+            frame: currentFrame,
+            entityId: attacker.id,
+            data: { targetId: target.id, damage: attack.damage }
+          });
+        }
+      }
     }
   }
 }
@@ -237,14 +265,31 @@ enemy.SlowEffect = { active: true, duration: 3000, slowAmount: 0.5 };
 ## Modding Support
 
 ### System Registration
-Mods can register entirely new systems without modifying core code:
+Mods can register entirely new systems without modifying core code. All mod systems must follow deterministic principles:
 
 ```typescript
-// Mod registers custom system
+// Mod registers custom system (must be deterministic)
 class LaserAttackSystem implements System {
   update(entities: EntityManager, deltaTime: number) {
-    const laserTowers = entities.withComponents(['Position', 'LaserWeapon']);
-    // Custom laser attack logic
+    const laserTowers = entities.withComponents(['Position', 'LaserWeapon', 'DeterministicTiming']);
+    
+    for (const tower of laserTowers) {
+      const timing = tower.DeterministicTiming;
+      const currentFrame = GameClock.instance.getFrames();
+      
+      // Use frame-based timing and seeded RNG
+      if (currentFrame - timing.lastTriggerFrame >= tower.LaserWeapon.chargeFrames) {
+        const damage = tower.LaserWeapon.baseDamage * (0.8 + GameRNG.next() * 0.4);
+        
+        // Record critical events for replay
+        ReplayRecorder.instance.recordEvent({
+          type: 'laser_attack',
+          frame: currentFrame,
+          entityId: tower.id,
+          data: { damage }
+        });
+      }
+    }
   }
 }
 
@@ -307,6 +352,9 @@ class BehaviorSystem implements System {
 2. **Query optimization** - cache frequently used queries
 3. **Minimal coupling** - systems communicate via components or events
 4. **Deterministic order** - define clear system execution order
+5. **Frame-based timing** - use GameClock for consistent timing across platforms
+6. **Seeded randomization** - use GameRNG instead of Math.random() for reproducible results
+7. **Event recording** - integrate with ReplayRecorder for critical game events
 
 ### Performance Considerations
 1. **Batch operations** - process similar entities together
@@ -320,14 +368,63 @@ class BehaviorSystem implements System {
 3. **Use events for cross-system communication** when needed
 4. **Validate mod components** to prevent crashes
 
+## New Systems for Replay & Leaderboard
+
+### ReplayRecordingSystem
+```typescript
+class ReplayRecordingSystem implements System {
+  update(entities: EntityManager, deltaTime: number) {
+    const replayableEntities = entities.withComponents(['Replay']);
+    
+    for (const entity of replayableEntities) {
+      const replay = entity.Replay;
+      if (!replay.recordEvents) continue;
+      
+      // Check if entity has changed significantly since last frame
+      if (this.hasSignificantChanges(entity)) {
+        ReplayRecorder.instance.recordEntityState(entity);
+      }
+    }
+    
+    // Take periodic snapshots for fast-forward capability
+    if (ReplayRecorder.instance.shouldTakeSnapshot()) {
+      ReplayRecorder.instance.takeSnapshot(entities);
+    }
+  }
+}
+```
+
+### ReplayPlaybackSystem
+```typescript
+class ReplayPlaybackSystem implements System {
+  private isPlayback: boolean = false;
+  private replayPlayer: ReplayPlayer;
+  
+  startPlayback(replayData: ReplayData) {
+    this.isPlayback = true;
+    this.replayPlayer = new ReplayPlayer(replayData);
+  }
+  
+  update(entities: EntityManager, deltaTime: number) {
+    if (!this.isPlayback) return;
+    
+    // Step through replay events and apply them
+    this.replayPlayer.step(entities);
+  }
+}
+```
+
 ## Integration with Tower Defense
 
-This ECS architecture enables:
+This deterministic ECS architecture enables:
 
 - **Flexible tower designs**: Mix and match components for different tower types
 - **Dynamic enemy behaviors**: Add/remove status effects without performance cost
-- **Mod-friendly systems**: Easy to extend without core modifications
+- **Mod-friendly systems**: Easy to extend without core modifications with deterministic constraints
 - **High performance**: Efficient queries and batch processing
 - **Clear separation**: Data, logic, and presentation are cleanly separated
+- **Replay functionality**: Complete game sessions can be recorded and played back
+- **Score validation**: Deterministic behavior enables automated cheat detection
+- **Cross-platform consistency**: Same seed produces identical results on any device
 
-The result is a highly modular, performant, and extensible tower defense game that can support extensive modding while maintaining smooth gameplay even with hundreds of entities.
+The result is a highly modular, performant, and extensible tower defense game that can support extensive modding while maintaining smooth gameplay even with hundreds of entities, plus full replay capabilities and competitive integrity through deterministic systems.

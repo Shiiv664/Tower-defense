@@ -9,16 +9,19 @@ This tower defense game is designed from the ground up to support extensive modd
 - **Central Event Bus**: All game actions (tower placement, enemy spawning, combat, wave progression) communicate through a central event system
 - **Loose Coupling**: Systems communicate via events rather than direct references
 - **Mod Integration**: Mods can listen to and emit events to interact with core systems
+- **Deterministic Events**: All events are frame-ordered and reproducible for replay compatibility
 
 ### Component-Based Design
 - **Entity Component System (ECS)**: Towers, enemies, and game objects use ECS pattern for maximum flexibility
 - **Modular Components**: Behavior, rendering, stats, and logic separated into discrete components
 - **Dynamic Composition**: Mods can add new components or modify existing ones
+- **Deterministic Components**: All mod components must support deterministic behavior for replay system
 
 ### Data-Driven Configuration
 - **JSON/YAML Configs**: All game content defined in easily editable configuration files
 - **Hot Reloading**: Changes to configs can be applied without restarting the game
-- **Validation**: Automatic validation ensures mod configs are valid and safe
+- **Validation**: Automatic validation ensures mod configs are valid, safe, and deterministic
+- **Seed Compatibility**: Configs must not break deterministic gameplay when loaded
 
 ## Modular System Design
 
@@ -76,29 +79,38 @@ This tower defense game is designed from the ground up to support extensive modd
 - Custom scoring and reward systems
 - Economic balance validation tools
 
-### 3. Mod API Design
+### 3. Deterministic Mod API Design
 
-**Tower API**
+**Tower API (Deterministic)**
 ```javascript
-// Register new tower type
+// Register new tower type with deterministic constraints
 registerTower({
   id: "ice_tower",
   name: "Frost Tower",
   config: "towers/ice_tower.json",
   behavior: "towers/ice_tower_behavior.js",
-  upgrades: ["frost_upgrade", "freeze_upgrade"]
+  upgrades: ["frost_upgrade", "freeze_upgrade"],
+  deterministic: {
+    usesRNG: true,        // Declares RNG usage for validation
+    recordEvents: ["attack", "freeze", "upgrade"] // Events to record for replay
+  }
 });
 ```
 
-**Enemy API**
+**Enemy API (Deterministic)**
 ```javascript
-// Create modular enemy
+// Create modular enemy with deterministic behavior
 registerEnemy({
   id: "armored_flyer",
   components: {
     movement: "flying",
     armor: "heavy",
     special: "magic_shield"
+  },
+  deterministic: {
+    usesRNG: true,             // Uses RNG for movement variations
+    usesFrameTiming: true,     // Uses frame-based timing
+    recordEvents: ["spawn", "death", "special_ability"]
   }
 });
 ```
@@ -176,15 +188,19 @@ src/
 - Real-time config changes for rapid iteration
 - Safe reload mechanisms to prevent crashes
 
-### Type Safety
+### Type Safety & Deterministic Validation
 - Complete TypeScript definitions for all APIs
 - IntelliSense support in modern editors
 - Compile-time validation for mod scripts
+- Runtime validation of deterministic behavior
+- Automatic detection of non-deterministic code patterns
 
 ### Validation System
 - Automatic validation of mod configurations
-- Runtime checks for mod compatibility
+- Runtime checks for mod compatibility and deterministic behavior  
 - Clear error messages for debugging
+- Replay compatibility verification for all mod code
+- Detection of banned functions (Date.now, Math.random, etc.)
 
 ### Sandboxing
 - Safe execution environment for mod scripts
@@ -212,4 +228,80 @@ src/
 6. **Package**: Bundle mod for distribution
 7. **Share**: Upload to community platform
 
-This architecture ensures that every aspect of the tower defense game can be extended, modified, or completely replaced by mods while maintaining stability, performance, and ease of development.
+## Deterministic Modding Constraints
+
+### Required Guidelines for Mod Developers
+
+#### 1. Timing Requirements
+```javascript
+// ❌ FORBIDDEN: Real-time based timing
+function updateTower() {
+  if (Date.now() - this.lastAttack > this.cooldown) {
+    this.attack();
+  }
+}
+
+// ✅ REQUIRED: Frame-based timing
+function updateTower() {
+  const currentFrame = GameClock.instance.getFrames();
+  if (currentFrame - this.lastAttackFrame >= this.cooldownFrames) {
+    this.attack();
+  }
+}
+```
+
+#### 2. Randomization Requirements
+```javascript
+// ❌ FORBIDDEN: Non-seeded randomization
+function calculateDamage() {
+  return this.baseDamage * (0.8 + Math.random() * 0.4);
+}
+
+// ✅ REQUIRED: Seeded randomization
+function calculateDamage() {
+  return this.baseDamage * (0.8 + GameRNG.next() * 0.4);
+}
+```
+
+#### 3. Event Recording Requirements
+```javascript
+// ✅ REQUIRED: Record critical events
+function performSpecialAttack(target) {
+  // Execute the attack
+  const damage = this.calculateDamage();
+  target.takeDamage(damage);
+  
+  // Record for replay system
+  ReplayRecorder.instance.recordEvent({
+    type: 'special_attack',
+    frame: GameClock.instance.getFrames(),
+    entityId: this.id,
+    data: { targetId: target.id, damage }
+  });
+}
+```
+
+### Mod Validation Pipeline
+
+1. **Static Analysis**: Scan mod code for banned functions
+2. **Deterministic Testing**: Run mod with same seed multiple times
+3. **Replay Verification**: Ensure mod behavior is reproducible
+4. **Performance Testing**: Check frame timing consistency
+5. **Integration Testing**: Verify compatibility with replay system
+
+### Banned Functions & Patterns
+
+**Forbidden APIs:**
+- `Date.now()`, `performance.now()`
+- `Math.random()`
+- `setTimeout()`, `setInterval()`
+- Browser-specific timing APIs
+- Network requests during gameplay
+
+**Required Replacements:**
+- Use `GameClock.instance` for all timing
+- Use `GameRNG` for all randomization
+- Use game event system for delayed actions
+- Use deterministic data sources only
+
+This architecture ensures that every aspect of the tower defense game can be extended, modified, or completely replaced by mods while maintaining stability, performance, deterministic behavior, and replay compatibility.

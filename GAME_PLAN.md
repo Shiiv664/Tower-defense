@@ -9,6 +9,7 @@ Develop and publish a commercial tower defense game as a PWA to Google Play Stor
 - **Three.js**: WebGL graphics and animations
 - **Entity Component System (ECS)**: Modular architecture for performance and extensibility (see [ECS_ARCHITECTURE.md](ECS_ARCHITECTURE.md))
 - **Tile System**: Flexible property-based world tiles supporting modding (see [TILE_SYSTEM.md](TILE_SYSTEM.md))
+- **Deterministic Systems**: Seed-based randomization for replay and leaderboard functionality (see [DETERMINISTIC_ARCHITECTURE.md](DETERMINISTIC_ARCHITECTURE.md))
 - **PWA**: Progressive Web App capabilities
 - **Capacitor**: Native app wrapper for app stores
 
@@ -20,6 +21,10 @@ Develop and publish a commercial tower defense game as a PWA to Google Play Stor
 - **Offline Capable**: Play without internet connection
 - **Progressive**: Installable from browser
 - **Modding Support**: Extensible architecture for community mods (see [MODDING_ARCHITECTURE.md](MODDING_ARCHITECTURE.md))
+- **Deterministic Gameplay**: Seed-based randomization for reproducible games
+- **Replay System**: Watch any completed game from start to finish
+- **Leaderboard Integration**: Global rankings with score validation
+- **Spectating**: View top-scoring games as replays
 
 ## Monetization Strategy
 - **Freemium Model**: Basic game free, premium features paid
@@ -51,6 +56,9 @@ Develop and publish a commercial tower defense game as a PWA to Google Play Stor
 - **Offline**: Core gameplay available without network
 - **Storage**: Local save data, settings persistence
 - **Modular Architecture**: Plugin-based system for extensibility and mod support
+- **Deterministic**: Reproducible gameplay with seed-based randomization for consistent behavior across platforms and sessions
+- **Replay System**: Efficient recording and playback of complete game sessions
+- **Score Validation**: Cryptographic verification of game results for leaderboard integrity
 
 ## Success Metrics
 - **Downloads**: Target 10K+ in first year
