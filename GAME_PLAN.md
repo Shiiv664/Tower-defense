@@ -9,6 +9,7 @@ Develop and publish a commercial tower defense game as a PWA to Google Play Stor
 - **Three.js**: WebGL graphics and animations
 - **Entity Component System (ECS)**: Modular architecture for performance and extensibility (see [ECS_ARCHITECTURE.md](ECS_ARCHITECTURE.md))
 - **Tile System**: Flexible property-based world tiles supporting modding (see [TILE_SYSTEM.md](TILE_SYSTEM.md))
+- **Pathfinding System**: Flow field pathfinding with organic movement behaviors (see [PATHFINDING_ARCHITECTURE.md](PATHFINDING_ARCHITECTURE.md))
 - **Deterministic Systems**: Seed-based randomization for replay and leaderboard functionality (see [DETERMINISTIC_ARCHITECTURE.md](DETERMINISTIC_ARCHITECTURE.md))
 - **PWA**: Progressive Web App capabilities
 - **Capacitor**: Native app wrapper for app stores

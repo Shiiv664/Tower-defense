@@ -20,6 +20,11 @@ This document outlines the deterministic systems that enable replay functionalit
 - Entity processing follows consistent iteration patterns
 - Event handling maintains strict ordering
 
+### 4. Integer-Only Game Logic
+- All game state uses pure integer values to eliminate floating-point precision issues
+- Positions, health, damage, speeds use integer arithmetic with scaling factors
+- Graphics system handles smooth interpolation separately using floating-point for visual-only effects
+
 ## Seeded Random Number Generation
 
 ### SeededRNG Class
@@ -447,5 +452,48 @@ class AntiCheat {
 - **Educational Content**: Strategy guides with replay demonstrations
 - **Competitive Scene**: Tournaments with verified results
 - **Content Creation**: Streamers can showcase interesting replays
+
+## Common Determinism Questions (FAQ)
+
+### Q: What about input system determinism across devices?
+**A: Not an issue.** The input system converts raw hardware input (screen taps, mouse clicks) into semantic game actions (place_tower, upgrade_tower) before recording. Replays store actions like `{frame: 100, action: "place_tower", tileX: 5, tileY: 3}`, not device coordinates. Same game action works identically on any device.
+
+### Q: What about cross-platform consistency (ARM vs x86, different JS engines)?
+**A: Already handled.** The architecture uses:
+- Seeded RNG (not platform-dependent Math.random())
+- Frame-based timing (not real-time clocks) 
+- Pure JavaScript math (IEEE 754 standard across all platforms)
+- Game actions (not raw input)
+
+Same seed + same actions = same result on any platform.
+
+### Q: What about WebGL/Three.js rendering determinism?
+**A: Rendering doesn't affect game logic.** The system separates:
+- **Game simulation**: Deterministic fixed timesteps (tower at tile 5,3 deals 25 damage)
+- **Visual rendering**: Smooth interpolation between game states (cosmetic animations, lerping)
+
+Replays record game states, not pixel positions. Different rendering = same gameplay.
+
+### Q: What about async operations (network, storage) during gameplay?
+**A: Game runs offline.** No network calls during gameplay. Storage happens in background without affecting game logic timing. Pattern:
+1. Player plays game (deterministic, offline)
+2. Game ends, replay generated
+3. Later: upload score/replay (async, doesn't affect determinism)
+
+### Q: What about memory layout affecting Map/Set iteration?
+**A: JavaScript guarantees insertion order.** Maps and Sets iterate in insertion order per ECMAScript spec, consistent across all modern JS engines. No memory layout concerns.
+
+### Q: What about floating-point precision issues in enemy positioning?
+**A: Pure integer game logic.** All game state (positions, health, damage, speeds) uses integer arithmetic only. Example:
+```typescript
+// Integer positions with scaling
+const POSITION_SCALE = 1000; // 1 tile = 1000 units
+enemy.x = 5000; // Represents tile 5.0
+enemy.x += 25;  // Integer movement speed
+
+// Graphics converts to float only for rendering
+const visualX = enemy.x / POSITION_SCALE; // 5.025 for smooth display
+```
+Game logic never touches floating-point math, eliminating cross-platform precision differences entirely.
 
 This deterministic architecture ensures that every game can be perfectly reproduced, enabling rich replay features while maintaining competitive integrity through robust validation systems.
