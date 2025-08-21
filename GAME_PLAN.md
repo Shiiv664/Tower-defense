@@ -7,6 +7,7 @@ Develop and publish a commercial tower defense game as a PWA to Google Play Stor
 - **TypeScript**: Type-safe development
 - **Vite**: Fast development server and build tool
 - **Three.js**: WebGL graphics and animations
+- **Entity Component System (ECS)**: Modular architecture for performance and extensibility (see [ECS_ARCHITECTURE.md](ECS_ARCHITECTURE.md))
 - **PWA**: Progressive Web App capabilities
 - **Capacitor**: Native app wrapper for app stores
 
@@ -17,6 +18,7 @@ Develop and publish a commercial tower defense game as a PWA to Google Play Stor
 - **Mobile-First**: Touch controls, responsive design
 - **Offline Capable**: Play without internet connection
 - **Progressive**: Installable from browser
+- **Modding Support**: Extensible architecture for community mods (see [MODDING_ARCHITECTURE.md](MODDING_ARCHITECTURE.md))
 
 ## Monetization Strategy
 - **Freemium Model**: Basic game free, premium features paid
@@ -47,6 +49,7 @@ Develop and publish a commercial tower defense game as a PWA to Google Play Stor
 - **Responsive**: Works on phones, tablets, desktop
 - **Offline**: Core gameplay available without network
 - **Storage**: Local save data, settings persistence
+- **Modular Architecture**: Plugin-based system for extensibility and mod support
 
 ## Success Metrics
 - **Downloads**: Target 10K+ in first year
