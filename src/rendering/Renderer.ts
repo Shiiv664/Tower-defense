@@ -62,7 +62,6 @@ export class Renderer {
   
   render(entityManager: EntityManager): void {
     const renderableEntities = entityManager.withComponents(['Position', 'Render']);
-    
     const currentEntityIds = new Set<string>();
     
     for (const entity of renderableEntities) {
@@ -70,7 +69,9 @@ export class Renderer {
       const position = getComponent<PositionComponent>(entity, 'Position')!;
       const render = getComponent<RenderComponent>(entity, 'Render')!;
       
-      if (!render.visible) continue;
+      if (!render.visible) {
+        continue;
+      }
       
       let mesh = this.entityMeshes.get(entity.id);
       

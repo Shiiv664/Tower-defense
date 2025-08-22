@@ -135,20 +135,19 @@ export class Game {
     const rect = canvas.getBoundingClientRect();
     
     const normalizedX = (screenX / rect.width) * 2 - 1;
-    const normalizedY = -(screenY / rect.height) * 2 + 1;
+    const normalizedY = ((rect.height - screenY) / rect.height) * 2 - 1;
     
     const viewSize = Math.max(this.tileMap.width, this.tileMap.height) * 40;
     const aspect = rect.width / rect.height;
     
     const worldX = (normalizedX * viewSize * aspect / 2) + (this.tileMap.width * 20);
-    const worldY = (-normalizedY * viewSize / 2) + (this.tileMap.height * 20);
+    const worldY = (normalizedY * viewSize / 2) + (this.tileMap.height * 20);
     
     return { x: worldX, y: worldY };
   }
   
   private placeTower(tileX: number, tileY: number): void {
     if (!this.tileMap.isBuildable(tileX, tileY)) {
-      console.log('Cannot build on this tile');
       return;
     }
     
@@ -157,7 +156,6 @@ export class Game {
     
     const existingTower = this.findTowerAt(worldX, worldY);
     if (existingTower) {
-      console.log('Tower already exists here');
       return;
     }
     

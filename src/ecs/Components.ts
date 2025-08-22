@@ -43,3 +43,8 @@ export interface ProjectileComponent {
 export interface TimingComponent {
   lastAttackTime: number;
 }
+
+export interface EntityTypeComponent {
+  type: 'tower' | 'enemy' | 'projectile' | 'neutral';
+  faction: 'player' | 'enemy' | 'neutral';
+}

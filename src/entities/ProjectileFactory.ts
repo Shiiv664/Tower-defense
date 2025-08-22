@@ -2,7 +2,8 @@ import { createEntity, addComponent } from '../ecs/index.js';
 import type { 
   PositionComponent, 
   ProjectileComponent, 
-  RenderComponent 
+  RenderComponent,
+  EntityTypeComponent
 } from '../ecs/index.js';
 
 export function createProjectile(id: string, x: number, y: number, targetId: string, damage: number) {
@@ -22,6 +23,11 @@ export function createProjectile(id: string, x: number, y: number, targetId: str
     color: 0xFFEB3B,
     size: 5,
     visible: true
+  });
+
+  addComponent<EntityTypeComponent>(projectile, 'EntityType', {
+    type: 'projectile',
+    faction: 'player'
   });
   
   return projectile;

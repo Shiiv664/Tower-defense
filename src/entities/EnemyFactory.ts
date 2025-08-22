@@ -3,7 +3,8 @@ import type {
   PositionComponent, 
   HealthComponent, 
   MovementComponent, 
-  RenderComponent 
+  RenderComponent,
+  EntityTypeComponent
 } from '../ecs/index.js';
 
 export function createBasicEnemy(id: string, x: number, y: number) {
@@ -27,6 +28,11 @@ export function createBasicEnemy(id: string, x: number, y: number) {
     color: 0xF44336,
     size: 15,
     visible: true
+  });
+
+  addComponent<EntityTypeComponent>(enemy, 'EntityType', {
+    type: 'enemy',
+    faction: 'enemy'
   });
   
   return enemy;

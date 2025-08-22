@@ -5,7 +5,8 @@ import type {
   AttackComponent, 
   RenderComponent, 
   TargetingComponent,
-  TimingComponent 
+  TimingComponent,
+  EntityTypeComponent
 } from '../ecs/index.js';
 
 export function createBasicTower(id: string, x: number, y: number) {
@@ -39,6 +40,11 @@ export function createBasicTower(id: string, x: number, y: number) {
   
   addComponent<TimingComponent>(tower, 'Timing', {
     lastAttackTime: 0
+  });
+
+  addComponent<EntityTypeComponent>(tower, 'EntityType', {
+    type: 'tower',
+    faction: 'player'
   });
   
   return tower;

@@ -4,22 +4,30 @@ import type {
   AttackComponent, 
   TargetingComponent, 
   TimingComponent,
-  HealthComponent 
+  EntityTypeComponent
 } from '../ecs/index.js';
 import { createProjectile } from '../entities/index.js';
 
 export class AttackSystem implements System {
   private projectileIdCounter = 0;
   
-  update(entityManager: EntityManager, deltaTime: number): void {
-    const towers = entityManager.withComponents(['Position', 'Attack', 'Targeting', 'Timing']);
-    const enemies = entityManager.withComponents(['Position', 'Health']);
+  update(entityManager: EntityManager): void {
+    const towers = entityManager.withComponents(['Position', 'Attack', 'Targeting', 'Timing', 'EntityType']);
+    const possibleTargets = entityManager.withComponents(['Position', 'Health', 'EntityType']);
+    
+    // Filter for enemy entities only
+    const enemies = possibleTargets.filter(entity => {
+      const entityType = getComponent<EntityTypeComponent>(entity, 'EntityType')!;
+      return entityType.type === 'enemy';
+    });
+    
     
     for (const tower of towers) {
       const position = getComponent<PositionComponent>(tower, 'Position')!;
       const attack = getComponent<AttackComponent>(tower, 'Attack')!;
       const targeting = getComponent<TargetingComponent>(tower, 'Targeting')!;
       const timing = getComponent<TimingComponent>(tower, 'Timing')!;
+      const towerType = getComponent<EntityTypeComponent>(tower, 'EntityType')!;
       
       const currentTime = Date.now();
       
@@ -27,7 +35,7 @@ export class AttackSystem implements System {
         continue;
       }
       
-      const target = this.findTarget(position, attack.range, enemies);
+      const target = this.findTarget(position, attack.range, enemies, towerType);
       if (!target) {
         targeting.currentTarget = null;
         continue;
@@ -48,12 +56,19 @@ export class AttackSystem implements System {
     }
   }
   
-  private findTarget(towerPos: PositionComponent, range: number, enemies: any[]) {
+  private findTarget(towerPos: PositionComponent, range: number, enemies: any[], towerType: EntityTypeComponent) {
     let closestEnemy = null;
     let closestDistance = Infinity;
     
     for (const enemy of enemies) {
       const enemyPos = getComponent<PositionComponent>(enemy, 'Position')!;
+      const enemyType = getComponent<EntityTypeComponent>(enemy, 'EntityType')!;
+      
+      // Only target entities from hostile factions
+      if (enemyType.faction === towerType.faction) {
+        continue; // Don't attack allies
+      }
+      
       const distance = Math.sqrt(
         Math.pow(enemyPos.x - towerPos.x, 2) + 
         Math.pow(enemyPos.y - towerPos.y, 2)
