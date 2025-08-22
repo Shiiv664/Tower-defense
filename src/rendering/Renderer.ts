@@ -38,6 +38,20 @@ export class Renderer {
     window.addEventListener('resize', () => this.onWindowResize(container));
   }
   
+  updateDimensions(mapWidth: number, mapHeight: number): void {
+    const aspect = this.renderer.domElement.clientWidth / this.renderer.domElement.clientHeight;
+    const viewSize = Math.max(mapWidth, mapHeight) * 40;
+    
+    this.camera.left = -viewSize * aspect / 2;
+    this.camera.right = viewSize * aspect / 2;
+    this.camera.top = viewSize / 2;
+    this.camera.bottom = -viewSize / 2;
+    this.camera.updateProjectionMatrix();
+    
+    this.camera.position.set(mapWidth * 20, mapHeight * 20, 100);
+    this.camera.lookAt(mapWidth * 20, mapHeight * 20, 0);
+  }
+
   initializeTiles(tileMap: TileMap): void {
     this.clearTiles();
     

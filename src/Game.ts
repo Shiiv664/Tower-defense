@@ -28,6 +28,7 @@ export class Game {
   constructor(container: HTMLElement) {
     this.entityManager = new EntityManager();
     
+    // Initialize with default dimensions - will be updated in initialize()
     this.tileMap = new TileMap(20, 15);
     
     const goal = this.tileMap.findGoalPoint();
@@ -48,6 +49,33 @@ export class Game {
   async initialize(): Promise<void> {
     const configManager = ConfigManager.getInstance();
     await configManager.initialize();
+    
+    // Load map configuration and recreate map with correct dimensions
+    const mapConfig = configManager.getMapConfig('basic_map');
+    if (mapConfig) {
+      console.log('Loading map configuration:', mapConfig);
+      
+      // Create new tile map with configured dimensions and spawn/goal positions
+      this.tileMap = new TileMap(mapConfig.width, mapConfig.height, mapConfig.spawn, mapConfig.goal);
+      
+      // Recreate flow field with new map
+      const goal = this.tileMap.findGoalPoint();
+      if (!goal) throw new Error('No goal point found in configured map');
+      
+      this.flowField = new FlowField(this.tileMap, goal.x, goal.y);
+      
+      // Update renderer with new dimensions and reinitialize tiles
+      this.renderer.updateDimensions(this.tileMap.width, this.tileMap.height);
+      this.renderer.initializeTiles(this.tileMap);
+      
+      // Recreate movement system with new flow field
+      this.movementSystem = new MovementSystem(this.flowField);
+      
+      console.log(`Map loaded: ${mapConfig.width}x${mapConfig.height}, spawn: ${mapConfig.spawn.x},${mapConfig.spawn.y}, goal: ${mapConfig.goal.x},${mapConfig.goal.y}`);
+    } else {
+      console.warn('Failed to load map config, using default dimensions');
+    }
+    
     console.log('Game configuration system initialized');
   }
   

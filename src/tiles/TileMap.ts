@@ -5,20 +5,24 @@ export class TileMap {
   width: number;
   height: number;
   
-  constructor(width: number, height: number) {
+  constructor(width: number, height: number, spawn?: { x: number; y: number }, goal?: { x: number; y: number }) {
     this.width = width;
     this.height = height;
     this.grid = [];
-    this.initializeGrid();
+    this.initializeGrid(spawn, goal);
   }
   
-  private initializeGrid(): void {
+  private initializeGrid(spawn?: { x: number; y: number }, goal?: { x: number; y: number }): void {
+    // Use provided spawn/goal positions or fall back to default center positions
+    const spawnPos = spawn || { x: 0, y: Math.floor(this.height / 2) };
+    const goalPos = goal || { x: this.width - 1, y: Math.floor(this.height / 2) };
+    
     for (let y = 0; y < this.height; y++) {
       this.grid[y] = [];
       for (let x = 0; x < this.width; x++) {
-        if (x === 0 && y === Math.floor(this.height / 2)) {
+        if (x === spawnPos.x && y === spawnPos.y) {
           this.grid[y][x] = SPAWN;
-        } else if (x === this.width - 1 && y === Math.floor(this.height / 2)) {
+        } else if (x === goalPos.x && y === goalPos.y) {
           this.grid[y][x] = GOAL;
         } else {
           this.grid[y][x] = GRASS;
