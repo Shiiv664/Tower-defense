@@ -136,6 +136,10 @@ export class Renderer {
     this.renderer.setSize(container.clientWidth, container.clientHeight);
   }
   
+  getCamera(): THREE.OrthographicCamera {
+    return this.camera;
+  }
+
   dispose(): void {
     this.renderer.dispose();
   }

@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { EntityManager } from './ecs/index.js';
 import { TileMap } from './tiles/index.js';
 import { FlowField } from './pathfinding/index.js';
@@ -134,16 +135,27 @@ export class Game {
     const canvas = this.renderer.renderer.domElement;
     const rect = canvas.getBoundingClientRect();
     
-    const normalizedX = (screenX / rect.width) * 2 - 1;
-    const normalizedY = ((rect.height - screenY) / rect.height) * 2 - 1;
+    // Use Three.js raycasting for accurate coordinate conversion
+    const mouse = new THREE.Vector2();
+    mouse.x = ((screenX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((screenY - rect.top) / rect.height) * 2 + 1;
     
-    const viewSize = Math.max(this.tileMap.width, this.tileMap.height) * 40;
-    const aspect = rect.width / rect.height;
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, this.renderer.getCamera());
     
-    const worldX = (normalizedX * viewSize * aspect / 2) + (this.tileMap.width * 20);
-    const worldY = (normalizedY * viewSize / 2) + (this.tileMap.height * 20);
+    // Create a plane at z=0 to intersect with
+    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    const intersectionPoint = new THREE.Vector3();
     
-    return { x: worldX, y: worldY };
+    if (raycaster.ray.intersectPlane(plane, intersectionPoint)) {
+      return { 
+        x: intersectionPoint.x, 
+        y: intersectionPoint.y 
+      };
+    }
+    
+    // Fallback if no intersection
+    return { x: 0, y: 0 };
   }
   
   private placeTower(tileX: number, tileY: number): void {
@@ -151,8 +163,8 @@ export class Game {
       return;
     }
     
-    const worldX = tileX * 40;
-    const worldY = tileY * 40;
+    const worldX = tileX * 40 + 20; // Center of tile (add half tile size)
+    const worldY = tileY * 40 + 20; // Center of tile (add half tile size)
     
     const existingTower = this.findTowerAt(worldX, worldY);
     if (existingTower) {
@@ -162,10 +174,9 @@ export class Game {
     const tower = createBasicTower(`tower_${this.towerIdCounter++}`, worldX, worldY);
     this.entityManager.addEntity(tower);
     
-    this.placingTower = false;
-    document.getElementById('place-tower-btn')?.classList.remove('active');
+    // Don't automatically disable placing mode - let user place multiple towers
     const status = document.getElementById('status');
-    if (status) status.textContent = 'Tower placed!';
+    if (status) status.textContent = `Tower placed!`;
   }
   
   private removeTower(tileX: number, tileY: number): void {
