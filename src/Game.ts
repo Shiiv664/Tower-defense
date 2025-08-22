@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { EntityManager } from './ecs/index.js';
 import { TileMap } from './tiles/index.js';
 import { FlowField } from './pathfinding/index.js';
@@ -6,6 +5,7 @@ import { Renderer } from './rendering/index.js';
 import { MovementSystem, AttackSystem, ProjectileSystem } from './systems/index.js';
 import { createBasicTower, createBasicEnemy } from './entities/index.js';
 import { ConfigManager } from './config/index.js';
+import { CoordinateSystem } from './utils/CoordinateSystem.js';
 
 export class Game {
   private entityManager: EntityManager;
@@ -151,55 +151,31 @@ export class Game {
   }
   
   private handleCanvasClick(event: MouseEvent): void {
-    const rect = this.renderer.getDOMElement().getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    const worldPos = this.screenToWorld(x, y);
-    const tileX = Math.floor(worldPos.x / 40);
-    const tileY = Math.floor(worldPos.y / 40);
+    const coordinateSystem = CoordinateSystem.getInstance();
+    const tileCoords = coordinateSystem.screenToTileCoordinates(
+      event.clientX,
+      event.clientY,
+      this.renderer.getCamera(),
+      this.renderer.getDOMElement()
+    );
     
     if (this.placingTower) {
-      this.placeTower(tileX, tileY);
+      this.placeTower(tileCoords.x, tileCoords.y);
     } else if (this.removingTower) {
-      this.removeTower(tileX, tileY);
+      this.removeTower(tileCoords.x, tileCoords.y);
     }
   }
   
-  private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
-    const canvas = this.renderer.getDOMElement();
-    const rect = canvas.getBoundingClientRect();
-    
-    // Use Three.js raycasting for accurate coordinate conversion
-    const mouse = new THREE.Vector2();
-    mouse.x = ((screenX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((screenY - rect.top) / rect.height) * 2 + 1;
-    
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, this.renderer.getCamera());
-    
-    // Create a plane at z=0 to intersect with
-    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-    const intersectionPoint = new THREE.Vector3();
-    
-    if (raycaster.ray.intersectPlane(plane, intersectionPoint)) {
-      return { 
-        x: intersectionPoint.x, 
-        y: intersectionPoint.y 
-      };
-    }
-    
-    // Fallback if no intersection
-    return { x: 0, y: 0 };
-  }
   
   private placeTower(tileX: number, tileY: number): void {
     if (!this.tileMap.isBuildable(tileX, tileY)) {
       return;
     }
     
-    const worldX = tileX * 40 + 20; // Center of tile (add half tile size)
-    const worldY = tileY * 40 + 20; // Center of tile (add half tile size)
+    const coordinateSystem = CoordinateSystem.getInstance();
+    const worldCenter = coordinateSystem.getTileCenterWorld(tileX, tileY);
+    const worldX = worldCenter.x;
+    const worldY = worldCenter.y;
     
     const existingTower = this.findTowerAt(worldX, worldY);
     if (existingTower) {
@@ -215,8 +191,10 @@ export class Game {
   }
   
   private removeTower(tileX: number, tileY: number): void {
-    const worldX = tileX * 40;
-    const worldY = tileY * 40;
+    const coordinateSystem = CoordinateSystem.getInstance();
+    const worldCoords = coordinateSystem.tileToWorldCoordinates(tileX, tileY);
+    const worldX = worldCoords.x;
+    const worldY = worldCoords.y;
     
     const tower = this.findTowerAt(worldX, worldY);
     if (tower) {
@@ -251,10 +229,12 @@ export class Game {
     
     for (let i = 0; i < enemyCount; i++) {
       setTimeout(() => {
+        const coordinateSystem = CoordinateSystem.getInstance();
+        const spawnWorldCoords = coordinateSystem.tileToWorldCoordinates(spawn.x, spawn.y);
         const enemy = createBasicEnemy(
           `enemy_${this.enemyIdCounter++}`,
-          spawn.x * 40,
-          spawn.y * 40
+          spawnWorldCoords.x,
+          spawnWorldCoords.y
         );
         this.entityManager.addEntity(enemy);
       }, i * 1000);

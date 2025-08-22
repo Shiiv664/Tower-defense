@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { EntityManager, getComponent } from '../ecs/index.js';
 import type { PositionComponent, RenderComponent } from '../ecs/index.js';
 import { TileMap } from '../tiles/index.js';
+import { GAME_CONSTANTS } from '../constants/GameConstants.js';
 
 export class Renderer {
   private scene: THREE.Scene;
@@ -15,7 +16,7 @@ export class Renderer {
     this.scene.background = new THREE.Color(0x2c3e50);
     
     const aspect = container.clientWidth / container.clientHeight;
-    const viewSize = Math.max(mapWidth, mapHeight) * 40;
+    const viewSize = Math.max(mapWidth, mapHeight) * GAME_CONSTANTS.TILE_SIZE;
     
     this.camera = new THREE.OrthographicCamera(
       -viewSize * aspect / 2,
@@ -26,8 +27,9 @@ export class Renderer {
       1000
     );
     
-    this.camera.position.set(mapWidth * 20, mapHeight * 20, 100);
-    this.camera.lookAt(mapWidth * 20, mapHeight * 20, 0);
+    const halfTile = GAME_CONSTANTS.TILE_SIZE / 2;
+    this.camera.position.set(mapWidth * halfTile, mapHeight * halfTile, 100);
+    this.camera.lookAt(mapWidth * halfTile, mapHeight * halfTile, 0);
     
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -40,7 +42,7 @@ export class Renderer {
   
   updateDimensions(mapWidth: number, mapHeight: number): void {
     const aspect = this.renderer.domElement.clientWidth / this.renderer.domElement.clientHeight;
-    const viewSize = Math.max(mapWidth, mapHeight) * 40;
+    const viewSize = Math.max(mapWidth, mapHeight) * GAME_CONSTANTS.TILE_SIZE;
     
     this.camera.left = -viewSize * aspect / 2;
     this.camera.right = viewSize * aspect / 2;
@@ -48,15 +50,15 @@ export class Renderer {
     this.camera.bottom = -viewSize / 2;
     this.camera.updateProjectionMatrix();
     
-    this.camera.position.set(mapWidth * 20, mapHeight * 20, 100);
-    this.camera.lookAt(mapWidth * 20, mapHeight * 20, 0);
+    const halfTile = GAME_CONSTANTS.TILE_SIZE / 2;
+    this.camera.position.set(mapWidth * halfTile, mapHeight * halfTile, 100);
+    this.camera.lookAt(mapWidth * halfTile, mapHeight * halfTile, 0);
   }
 
   initializeTiles(tileMap: TileMap): void {
     this.clearTiles();
     
-    const tileSize = 40;
-    const geometry = new THREE.PlaneGeometry(tileSize, tileSize);
+    const geometry = new THREE.PlaneGeometry(GAME_CONSTANTS.TILE_SIZE, GAME_CONSTANTS.TILE_SIZE);
     
     for (let y = 0; y < tileMap.height; y++) {
       for (let x = 0; x < tileMap.width; x++) {
@@ -67,7 +69,7 @@ export class Renderer {
         const material = new THREE.MeshBasicMaterial({ color });
         const mesh = new THREE.Mesh(geometry, material);
         
-        mesh.position.set(x * tileSize, y * tileSize, 0);
+        mesh.position.set(x * GAME_CONSTANTS.TILE_SIZE, y * GAME_CONSTANTS.TILE_SIZE, 0);
         this.scene.add(mesh);
         this.tileMeshes.push(mesh);
       }
