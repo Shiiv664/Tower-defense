@@ -1,0 +1,15 @@
+{
+  "id": "basic_map",
+  "name": "Basic Map",
+  "description": "A simple map for learning the game",
+  
+  "width": 20,
+  "height": 15,
+  
+  "spawn": { "x": 0, "y": 7 },
+  "goal": { "x": 19, "y": 7 },
+  
+  "difficulty": 1,
+  "waveCount": 10,
+  "startingMoney": 200
+}

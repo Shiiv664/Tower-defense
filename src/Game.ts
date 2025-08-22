@@ -5,6 +5,7 @@ import { FlowField } from './pathfinding/index.js';
 import { Renderer } from './rendering/index.js';
 import { MovementSystem, AttackSystem, ProjectileSystem } from './systems/index.js';
 import { createBasicTower, createBasicEnemy } from './entities/index.js';
+import { ConfigManager } from './config/index.js';
 
 export class Game {
   private entityManager: EntityManager;
@@ -42,6 +43,12 @@ export class Game {
     this.projectileSystem = new ProjectileSystem();
     
     this.setupEventListeners();
+  }
+  
+  async initialize(): Promise<void> {
+    const configManager = ConfigManager.getInstance();
+    await configManager.initialize();
+    console.log('Game configuration system initialized');
   }
   
   start(): void {
@@ -110,13 +117,13 @@ export class Game {
       });
     }
     
-    this.renderer.renderer.domElement.addEventListener('click', (event) => {
+    this.renderer.getDOMElement().addEventListener('click', (event) => {
       this.handleCanvasClick(event);
     });
   }
   
   private handleCanvasClick(event: MouseEvent): void {
-    const rect = this.renderer.renderer.domElement.getBoundingClientRect();
+    const rect = this.renderer.getDOMElement().getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
@@ -132,7 +139,7 @@ export class Game {
   }
   
   private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
-    const canvas = this.renderer.renderer.domElement;
+    const canvas = this.renderer.getDOMElement();
     const rect = canvas.getBoundingClientRect();
     
     // Use Three.js raycasting for accurate coordinate conversion

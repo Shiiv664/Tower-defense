@@ -8,32 +8,40 @@ import type {
   TimingComponent,
   EntityTypeComponent
 } from '../ecs/index.js';
+import { ConfigManager } from '../config/index.js';
 
-export function createBasicTower(id: string, x: number, y: number) {
+export function createTower(id: string, towerTypeId: string, x: number, y: number) {
+  const configManager = ConfigManager.getInstance();
+  const config = configManager.getTowerConfig(towerTypeId);
+  
+  if (!config) {
+    throw new Error(`Tower configuration not found for type: ${towerTypeId}`);
+  }
+  
   const tower = createEntity(id);
   
   addComponent<PositionComponent>(tower, 'Position', { x, y });
   
   addComponent<HealthComponent>(tower, 'Health', {
-    current: 100,
-    maximum: 100
+    current: config.health.maximum,
+    maximum: config.health.maximum
   });
   
   addComponent<AttackComponent>(tower, 'Attack', {
-    damage: 25,
-    range: 100,
-    cooldown: 1000
+    damage: config.attack.damage,
+    range: config.attack.range,
+    cooldown: config.attack.cooldown
   });
   
   addComponent<RenderComponent>(tower, 'Render', {
     type: 'tower',
-    color: 0x8BC34A,
-    size: 20,
+    color: config.render.color,
+    size: config.render.size,
     visible: true
   });
   
   addComponent<TargetingComponent>(tower, 'Targeting', {
-    strategy: 'closest',
+    strategy: config.targeting.strategy,
     currentTarget: null,
     lastTargetingTime: 0
   });
@@ -43,9 +51,14 @@ export function createBasicTower(id: string, x: number, y: number) {
   });
 
   addComponent<EntityTypeComponent>(tower, 'EntityType', {
-    type: 'tower',
-    faction: 'player'
+    type: config.entityType.type,
+    faction: config.entityType.faction
   });
   
   return tower;
+}
+
+// Convenience function for backward compatibility
+export function createBasicTower(id: string, x: number, y: number) {
+  return createTower(id, 'basic_tower', x, y);
 }

@@ -13,20 +13,20 @@ export class TileDefinition {
   }
 }
 
-export const GRASS = new TileDefinition("grass", new Map([
+export const GRASS = new TileDefinition("grass", new Map<string, any>([
   ["walkable", true],
   ["buildable", true],
   ["color", 0x4CAF50]
 ]));
 
-export const SPAWN = new TileDefinition("spawn", new Map([
+export const SPAWN = new TileDefinition("spawn", new Map<string, any>([
   ["walkable", true],
   ["buildable", false],
   ["isSpawn", true],
   ["color", 0xFF5722]
 ]));
 
-export const GOAL = new TileDefinition("goal", new Map([
+export const GOAL = new TileDefinition("goal", new Map<string, any>([
   ["walkable", true],
   ["buildable", false],
   ["isGoal", true],

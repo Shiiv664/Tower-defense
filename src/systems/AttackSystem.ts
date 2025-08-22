@@ -6,12 +6,12 @@ import type {
   TimingComponent,
   EntityTypeComponent
 } from '../ecs/index.js';
-import { createProjectile } from '../entities/index.js';
+import { createBasicProjectile } from '../entities/index.js';
 
 export class AttackSystem implements System {
   private projectileIdCounter = 0;
   
-  update(entityManager: EntityManager): void {
+  update(entityManager: EntityManager, _deltaTime: number): void {
     const towers = entityManager.withComponents(['Position', 'Attack', 'Targeting', 'Timing', 'EntityType']);
     const possibleTargets = entityManager.withComponents(['Position', 'Health', 'EntityType']);
     
@@ -44,7 +44,7 @@ export class AttackSystem implements System {
       targeting.currentTarget = target.id;
       timing.lastAttackTime = currentTime;
       
-      const projectile = createProjectile(
+      const projectile = createBasicProjectile(
         `projectile_${this.projectileIdCounter++}`,
         position.x,
         position.y,

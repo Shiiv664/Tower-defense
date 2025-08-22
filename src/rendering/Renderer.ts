@@ -139,6 +139,10 @@ export class Renderer {
   getCamera(): THREE.OrthographicCamera {
     return this.camera;
   }
+  
+  getDOMElement(): HTMLCanvasElement {
+    return this.renderer.domElement;
+  }
 
   dispose(): void {
     this.renderer.dispose();
