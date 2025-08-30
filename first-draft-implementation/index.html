@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tower Defense - First Draft</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas"></canvas>
+      <!-- HTML overlay for UI -->
+      <div id="ui-overlay">
+        <div id="tile-detail-panel" class="hidden">
+          <h3 id="tile-title">Tile Details</h3>
+          <div id="tile-info">
+            <p id="tile-coordinates"></p>
+            <p id="tile-type"></p>
+            <p id="tile-content"></p>
+          </div>
+          <button id="close-panel">×</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

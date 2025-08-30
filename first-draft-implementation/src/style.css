@@ -1,0 +1,117 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #000;
+}
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Three.js canvas */
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #001122;
+}
+
+/* UI overlay system */
+#ui-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Allow canvas interactions */
+  z-index: 1000;
+}
+
+/* Tile detail panel */
+#tile-detail-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 200px;
+  max-width: 300px;
+  color: white;
+  font-size: 14px;
+  pointer-events: auto; /* Panel should capture clicks */
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+#tile-detail-panel.hidden {
+  display: none;
+}
+
+#tile-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+}
+
+#tile-info p {
+  margin-bottom: 6px;
+  color: #ccc;
+}
+
+#close-panel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+#close-panel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #tile-detail-panel {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    font-size: 16px; /* Larger touch targets */
+  }
+  
+  #close-panel {
+    padding: 8px 12px;
+    font-size: 20px;
+  }
+}
+
+/* Mobile touch targets */
+@media (max-width: 480px) {
+  #tile-detail-panel {
+    bottom: 20px;
+    top: auto;
+    right: 10px;
+    left: 10px;
+  }
+}
