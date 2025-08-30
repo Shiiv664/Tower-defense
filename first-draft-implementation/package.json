@@ -14,6 +14,9 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@capacitor/android": "^5.7.6",
+    "@capacitor/cli": "^5.7.6",
+    "@capacitor/core": "^5.7.6",
     "@types/three": "^0.179.0",
     "three": "^0.179.1"
   }
