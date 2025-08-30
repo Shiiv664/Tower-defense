@@ -34,7 +34,7 @@ jobs:
     
     - name: Install dependencies
       working-directory: ./first-draft-implementation
-      run: npm ci
+      run: npm install
     
     - name: Build web assets
       working-directory: ./first-draft-implementation
